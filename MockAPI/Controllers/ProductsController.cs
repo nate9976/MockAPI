@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using MockApi.Api.Data;
 using MockApi.Api.DTOs;
+using MockApi.Api.Models;
 
 namespace MockApi.Api.Controllers;
 
@@ -21,7 +22,7 @@ public class ProductsController : ControllerBase
     public ActionResult<IEnumerable<ProductResponse>> GetFiltered([FromQuery] ProductFilterQuery filter)
     {
         var products = _productRepository.GetFiltered(filter);
-        return Ok(products);
+        return Ok(products.Select(ToResponse));
     }
 
     [HttpPatch("{id:int}")]
@@ -34,6 +35,18 @@ public class ProductsController : ControllerBase
             return NotFound(new { message = $"Product with id {id} was not found." });
         }
 
-        return Ok(updated);
+        return Ok(ToResponse(updated));
+    }
+    private ProductResponse ToResponse(Product product)
+    {
+        var categoryName = _categoryRepository.GetById(product.CategoryId)?.Name ?? "Unknown";
+
+        return new ProductResponse
+        {
+            Id = product.Id,
+            Name = product.Name,
+            Price = product.Price,
+            CategoryName = categoryName,
+        };
     }
 }
